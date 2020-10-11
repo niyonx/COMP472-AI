@@ -1,0 +1,20 @@
+[[source]]
+name = "pypi"
+url = "https://pypi.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+msgpack = "==1.0.0"
+six = "==1.15.0"
+numpy = "*"
+scipy = "*"
+scikit-learn = "*"
+notebook = "*"
+pandas = "*"
+autopep8 = "*"
+matplotlib = "*"
+
+[requires]
+python_version = "3.8"
