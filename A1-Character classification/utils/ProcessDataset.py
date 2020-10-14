@@ -1,7 +1,7 @@
 import os
 import pandas as pd
 import numpy as np
-import config
+from utils import config
 from sklearn.metrics import precision_recall_fscore_support
 
 
