@@ -1,4 +1,4 @@
-# COMP472-AI
+# Artificial Intelligence - COMP472
 
 ## Set up project
 
