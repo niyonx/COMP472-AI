@@ -9,6 +9,7 @@ def create_DictOfInfo(infoPath):
 
 
 DATASET_PATH = './Assig1-Dataset'
+OUTPUT_PATH = './Output'
 
 LATIN_TRAIN_SET = 'train_1.csv'
 LATIN_INFO = 'info_1.csv'
