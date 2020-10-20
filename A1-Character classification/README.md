@@ -5,6 +5,7 @@
 The dataset (in [Assig1-Dataset](./Assig1-Dataset)) consists of 2 classes of black & white images of size 32x32:
 + Latin characters
 + Greek characters
+
 Both include pre-splitted training set, validation set, and testing set.
 
 ### Instance Distribution:
@@ -19,7 +20,9 @@ Each notebook represents an experiment classification model with full life circl
 + [Base-MLP.ipynb](./Base-MLP.ipynb): Baseline Multi-Layered Perceptron.
 + [Best-MLP.ipynb](./Best-MLP.ipynb): Multi-Layered Perceptron with hyper-parameters found by performing grid search.
 
-All output of models are written to folder [Output](./Output)
+### Output:
++ All output of models are written to folder [Output](./Output)
++ All trained models are exported to folder [models](./models)
 
 ### Utils:
 Folder [utils](./utils) contains methods that are used frequently in the notebooks (ie: process dataset, plot confusion matrix, etc)
