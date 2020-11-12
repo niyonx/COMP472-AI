@@ -17,6 +17,7 @@ class COST(Enum):
 
 # Possible type of move
 class move_type(Enum):
+    STILL = 0
     UP = 1
     DOWN = 2
     LEFT = 3
@@ -58,7 +59,7 @@ def getIndexOfTuple(l, index, value):
     for pos,t in enumerate(l):
         if t[index] == value:
             return pos
-    return 
+    return None
 
 def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
     return {
@@ -193,12 +194,11 @@ def find_possible_paths(puzzle, opened= [], closed=[], columns= 4, rows= 2):
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
             paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
 
-
     # Exclude closed paths (if provided)
     if closed != []:
+        closed_paths = [x[0] for x in closed]
         paths = set(paths)
-        paths = [x for x in paths if x[0] not in closed[0]]
-
+        paths = [x for x in paths if x[0] not in closed_paths]
 
     # No duplicate paths in open list: replace existing with lowest cost path or add new path
     for path in paths:
@@ -209,12 +209,3 @@ def find_possible_paths(puzzle, opened= [], closed=[], columns= 4, rows= 2):
             opened.append(path)
 
     return opened
-
-
-# EXAMPLES 
-
-# print(move('30142657',1,0)) # '03142657'
-
-# print(find_possible_paths('30142657', [('32140617', 1)])) # [('32140657', 3, '30142657'), ('35142607', 3, '30142657'), ('36142057', 1, '30142657'), ('03142657', 1, '30142657'), ('31042657', 1, '30142657')]
-
-# print(find_possible_paths('30142657')) # [('36142057', 1, '30142657'), ('03142657', 1, '30142657'), ('31042657', 1, '30142657'), ('35142607', 3, '30142657'), ('32140657', 3, '30142657')]

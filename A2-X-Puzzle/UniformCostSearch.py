@@ -18,12 +18,11 @@ def ucs(puzzle: str, number, invokeTimeout=True):
         signal.alarm(helper.TIMEOUT)
 
     # Create solution and search file
-    sol, search = helper.get_sol_file(
-        '_ucs_', number), helper.get_search_file('_ucs_', number)
+    sol, search = helper.get_sol_file('_ucs_', number), helper.get_search_file('_ucs_', number)
 
     try:
-        startTime = time.time()
 
+        startTime = time.time()
         initial = puzzle
 
         # Each line starts with '0 0 0' because UCS does not use heuristic
@@ -31,8 +30,8 @@ def ucs(puzzle: str, number, invokeTimeout=True):
 
         cost = 0
         totalCost = 0
+        closed = [(initial, helper.move_type(0), 0, 0)]
 
-        closed = []
         opened = []
         opened = helper.find_possible_paths(puzzle, opened)
 
@@ -73,8 +72,7 @@ def ucs(puzzle: str, number, invokeTimeout=True):
                         path.append(puzzle)
 
                 duration = (time.time() - startTime)
-                # Write intial configuration
-                sol.write(f"0 0 {' '.join(initial)}\n")
+
                 for puzzle in reversed(path):
                     sol.write(
                         f"{puzzle[3]} {puzzle[1].value} {' '.join(puzzle[0])}\n")
