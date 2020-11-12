@@ -65,7 +65,7 @@ def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) ->
         move_type.WRAP_UP: zero_idx - columns * (rows - 1),
         move_type.WRAP_DOWN: zero_idx + columns * (rows - 1),
         move_type.WRAP_RIGHT: zero_idx + (columns - 1),
-        move_type.WRAP_LEFT: zero_idx - (columns - 1),
+        move_type.WRAP_LEFT: zero_idx - (columns - 1)
     }[move]
 
 def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
@@ -75,6 +75,8 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
     zero_idx = puzzle.index('0')
     last_idx = (columns * rows) - 1
     
+    # DIRECTION MOVES
+
     # Check move UP - regular cost
     if(get_moving_token(zero_idx, columns, rows, move_type.UP) >= 0):
         movingToken = get_moving_token(zero_idx, columns, rows, move_type.UP)
@@ -98,6 +100,8 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
         if(zero_idx % columns != 0): 
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.LEFT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.REGULAR, puzzle, movingToken))
+
+    # DIAG MOVES
 
     # Check move DIAG DOWN RIGHT - diagonal cost
     if(get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_RIGHT) <= last_idx):
@@ -127,9 +131,14 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.DIAG_UP_LEFT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
 
-    # Check WRAPPING moves if zero_idx is on upper left corner position
+    # CORNER MOVES
+
+    # Check moves if zero_idx is on upper left corner position
     if(zero_idx == 0):
-        # WRAP RIGHT
+        # DIAGONAL
+        movingToken = last_idx
+        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
+        # # WRAP RIGHT
         movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
         paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
         # WRAP DOWN
@@ -137,8 +146,11 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
             paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
 
-    # Check WRAPPING moves if zero_idx is on upper right corner position
-    if(zero_idx == columns - 1):
+    # Check moves if zero_idx is on upper right corner position
+    elif(zero_idx == columns - 1):
+        # DIAGONAL
+        movingToken = last_idx - columns + 1
+        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
         # WRAP LEFT
         movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
         paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
@@ -147,8 +159,11 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
             paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
 
-    # Check WRAPPING moves if zero_idx is on lower left corner position
-    if(zero_idx == last_idx - columns + 1):
+    # # Check moves if zero_idx is on lower left corner position
+    elif(zero_idx == last_idx - columns + 1):
+        # DIAGONAL
+        movingToken = columns - 1
+        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
         # WRAP RIGHT
         movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
         paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
@@ -157,8 +172,11 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
             movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
             paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
 
-    # Check WRAPPING moves if zero_idx is on lower right corner position
-    if(zero_idx == last_idx):
+    # Check moves if zero_idx is on lower right corner position
+    elif(zero_idx == last_idx):
+        # DIAGONAL
+        movingToken = 0
+        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
         # WRAP LEFT
         movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
         paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
