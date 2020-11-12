@@ -23,13 +23,20 @@ class move_type(Enum):
     DIAG_DOWN_LEFT = 6
     DIAG_UP_RIGHT = 7
     DIAG_UP_LEFT = 8
+    WRAP_UP = 9
+    WRAP_DOWN = 10
+    WRAP_RIGHT = 11
+    WRAP_LEFT = 12
 
-def get_sol_search_files(search_type, number): 
+def get_sol_file(search_type, number): 
     sol = open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'solution.txt'), "w")
+    return sol
+    
+
+def get_search_file(search_type, number): 
     search = open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'search.txt'), "w")
-    return (sol, search)
-
-
+    return search
+    
 # Read the input file containing puzzles and process to a list of puzzles
 def get_puzzles() -> list:
     file = open(INPUT_PATH, "r")
@@ -45,7 +52,7 @@ def move(puzzle, zero_idx, to_idx) -> str:
         puzzle = puzzle[:to_idx] + puzzle[zero_idx] + puzzle[to_idx+1:zero_idx] + puzzle[to_idx] + puzzle[zero_idx+1:]
     return puzzle
 
-def get_moving_token(zero_idx: int, columns: int, move: move_type) -> int:
+def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
     return {
         move_type.UP: zero_idx - columns,
         move_type.DOWN: zero_idx + columns,
@@ -54,65 +61,112 @@ def get_moving_token(zero_idx: int, columns: int, move: move_type) -> int:
         move_type.DIAG_DOWN_RIGHT: zero_idx + (columns + 1),
         move_type.DIAG_DOWN_LEFT: zero_idx + (columns - 1),
         move_type.DIAG_UP_RIGHT: zero_idx - (columns - 1),
-        move_type.DIAG_UP_LEFT: zero_idx - (columns + 1)
+        move_type.DIAG_UP_LEFT: zero_idx - (columns + 1),
+        move_type.WRAP_UP: zero_idx - columns * (rows - 1),
+        move_type.WRAP_DOWN: zero_idx + columns * (rows - 1),
+        move_type.WRAP_RIGHT: zero_idx + (columns - 1),
+        move_type.WRAP_LEFT: zero_idx - (columns - 1),
     }[move]
 
 def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
-    # returns list of all possible 1-step paths in form (path, cost, predecessor, token_to_move)
-    # TODO: when scaling, softcode values
+    # returns list of all possible 1-step paths in form (path, cost, predecessor, token_to_move) for any board configurations
 
     paths = []
     zero_idx = puzzle.index('0')
-    last_idx = (columns*rows)-1
+    last_idx = (columns * rows) - 1
     
     # Check move UP - regular cost
-    if(zero_idx - columns >= 0):
-        movingToken = get_moving_token(zero_idx, columns, move_type.UP)
+    if(get_moving_token(zero_idx, columns, rows, move_type.UP) >= 0):
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.UP)
         paths.append((move(puzzle, zero_idx, movingToken), COST.REGULAR, puzzle, movingToken))
 
     # Check move DOWN - regular cost
-    if(zero_idx + columns <= last_idx):
-        movingToken = get_moving_token(zero_idx, columns, move_type.DOWN)
+    if(get_moving_token(zero_idx, columns, rows, move_type.DOWN) <= last_idx):
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.DOWN)
         paths.append((move(puzzle, zero_idx, movingToken), COST.REGULAR, puzzle, movingToken))
 
-    # Check move LEFT - regular cost
-    if(zero_idx - 1 >= 0):
-        if(zero_idx % columns != 0): # moving left might be illegal 12340567 to 12304567
-            movingToken = get_moving_token(zero_idx, columns, move_type.LEFT)
+    # Check move RIGHT - regular cost
+    if(get_moving_token(zero_idx, columns, rows, move_type.RIGHT) <= last_idx):
+        # moving right is illegal is on rightmost positions of the board 
+        if((zero_idx + 1) % columns != 0):
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.RIGHT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.REGULAR, puzzle, movingToken))
 
-    # Check move RIGHT - regular cost
-    if(zero_idx + 1 <= last_idx):
-        if((zero_idx + 1) % columns != 0): # moving right might be illegal 12304567 to 12340567
-            movingToken = get_moving_token(zero_idx, columns, move_type.RIGHT)
+    # Check move LEFT - regular cost
+    if(get_moving_token(zero_idx, columns, rows, move_type.LEFT) >= 0):
+        # moving left is illegal is on leftmost positions of the board 
+        if(zero_idx % columns != 0): 
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.LEFT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.REGULAR, puzzle, movingToken))
 
     # Check move DIAG DOWN RIGHT - diagonal cost
-    if(zero_idx + (columns + 1) <= last_idx):
-        movingToken = get_moving_token(zero_idx, columns, move_type.DIAG_DOWN_RIGHT)
-        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
+    if(get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_RIGHT) <= last_idx):
+        # moving down right is illegal is on rightmost positions of the board 
+        if((zero_idx + 1) % columns != 0): 
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_RIGHT)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
 
     # Check move DIAG DOWN LEFT - diagonal/wrapping cost
-    if(zero_idx + (columns - 1) <= last_idx):
-        movingToken = get_moving_token(zero_idx, columns, move_type.DIAG_DOWN_LEFT)
-        # if zero_idx is in corner, diag move will lead to wrapping move e.g 01234567 to 31204567
-        if(zero_idx % columns == 0 or (zero_idx + 1) % columns == 0): # left corner or right corner
-            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
-        else:
+    if(get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_LEFT) <= last_idx):
+        # moving down left is illegal is on leftmost positions of the board 
+        if(zero_idx % columns != 0): 
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_LEFT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
     
     # Check move DIAG UP RIGHT - wrapping/diagonal cost
-    if(zero_idx - 3 >= 0):
-        movingToken = get_moving_token(zero_idx, columns, move_type.DIAG_UP_RIGHT)
-        if(zero_idx % columns == 0 or (zero_idx + 1) % columns == 0): # left corner or right corner
-            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
-        else:
+    if(get_moving_token(zero_idx, columns, rows, move_type.DIAG_UP_RIGHT) >= 0):
+        # moving up right is illegal is on rightmost positions of the board 
+        if((zero_idx + 1) % columns != 0): 
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.DIAG_UP_RIGHT)
             paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
 
     # Check move DIAG UP LEFT - diagonal cost
-    if(zero_idx - 5 >= 0):
-        movingToken = get_moving_token(zero_idx, columns, move_type.DIAG_UP_LEFT)
-        paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
+    if(get_moving_token(zero_idx, columns, rows, move_type.DIAG_UP_LEFT) >= 0):
+        # moving up left is illegal is on left-most positions of the board 
+        if(zero_idx % columns != 0): 
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.DIAG_UP_LEFT)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.DIAGONAL, puzzle, movingToken))
+
+    # Check WRAPPING moves if zero_idx is on upper left corner position
+    if(zero_idx == 0):
+        # WRAP RIGHT
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
+        paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+        # WRAP DOWN
+        if(rows > 2):
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+
+    # Check WRAPPING moves if zero_idx is on upper right corner position
+    if(zero_idx == columns - 1):
+        # WRAP LEFT
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
+        paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+        # WRAP DOWN
+        if(rows > 2):
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+
+    # Check WRAPPING moves if zero_idx is on lower left corner position
+    if(zero_idx == last_idx - columns + 1):
+        # WRAP RIGHT
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
+        paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+        # WRAP UP
+        if(rows > 2):
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+
+    # Check WRAPPING moves if zero_idx is on lower right corner position
+    if(zero_idx == last_idx):
+        # WRAP LEFT
+        movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
+        paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+        # WRAP UP
+        if(rows > 2):
+            movingToken = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
+            paths.append((move(puzzle, zero_idx, movingToken), COST.WRAPPING, puzzle, movingToken))
+
 
     # Exclude closed paths (if provided)
     if closed != []:
