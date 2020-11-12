@@ -1,6 +1,8 @@
 import time
 import signal
 from utils import helper
+from collections import defaultdict
+
 
 file = open(helper.INPUT_PATH, "r")
 puzzles = helper.get_puzzles()
@@ -31,7 +33,8 @@ def ucs(puzzle: str, number, invokeTimeout=True):
         totalCost = 0
 
         closed = []
-        opened = helper.find_possible_paths(puzzle)
+        opened = []
+        opened = helper.find_possible_paths(puzzle, opened)
 
         # Edge case: goal checking at initial position
         if(puzzle in helper.WIN_CONFIG):
@@ -43,6 +46,8 @@ def ucs(puzzle: str, number, invokeTimeout=True):
             return True
 
         while(opened):
+            
+            # sort opened by lowest cost
             opened.sort(key=lambda x: x[1].value)
             puzzle, cost, predecessor, token_to_move = opened.pop(0)
             closed.append((puzzle, cost, predecessor, token_to_move))
@@ -78,11 +83,13 @@ def ucs(puzzle: str, number, invokeTimeout=True):
                 sol.write(f"{totalCost} {duration:.1f}")
                 sol.close()
                 search.close()
+
                 return True
 
-            opened.extend(helper.find_possible_paths(puzzle, closed))
+            opened = helper.find_possible_paths(puzzle, opened, closed)
 
     except Exception as exc:
+
         if (str(exc) == "timeout"):
             sol.write('no solution')
             sol.close()

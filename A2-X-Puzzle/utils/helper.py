@@ -1,5 +1,7 @@
 from enum import Enum
 import os
+import itertools as it
+
 
 # Env variables
 INPUT_PATH = 'SamplePuzzle.txt'
@@ -52,6 +54,12 @@ def move(puzzle, zero_idx, to_idx) -> str:
         puzzle = puzzle[:to_idx] + puzzle[zero_idx] + puzzle[to_idx+1:zero_idx] + puzzle[to_idx] + puzzle[zero_idx+1:]
     return puzzle
 
+def getIndexOfTuple(l, index, value):
+    for pos,t in enumerate(l):
+        if t[index] == value:
+            return pos
+    return 
+
 def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
     return {
         move_type.UP: zero_idx - columns,
@@ -68,7 +76,7 @@ def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) ->
         move_type.WRAP_LEFT: zero_idx - (columns - 1)
     }[move]
 
-def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
+def find_possible_paths(puzzle, opened= [], closed=[], columns= 4, rows= 2):
     # returns list of all possible 1-step paths in form (path, cost, predecessor, token_to_move) for any board configurations
 
     paths = []
@@ -191,7 +199,16 @@ def find_possible_paths(puzzle, closed=[], columns= 4, rows= 2):
         paths = set(paths)
         paths = [x for x in paths if x[0] not in closed[0]]
 
-    return paths
+
+    # No duplicate paths in open list: replace existing with lowest cost path or add new path
+    for path in paths:
+        open_idx = getIndexOfTuple(opened, 0, path[0])
+        if(open_idx and opened[open_idx][1].value > path[1].value):
+            opened[open_idx] = path
+        elif(not open_idx):
+            opened.append(path)
+
+    return opened
 
 
 # EXAMPLES 
