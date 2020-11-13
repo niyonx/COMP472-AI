@@ -30,7 +30,7 @@ def ucs(puzzle: str, number, invokeTimeout=True):
 
         cost = 0
         totalCost = 0
-        closed = [(initial, helper.move_type(0), 0, 0)]
+        closed = [(initial, helper.COST.ZERO, '0', '0')]
 
         opened = []
         opened = helper.find_possible_paths(puzzle, opened)
