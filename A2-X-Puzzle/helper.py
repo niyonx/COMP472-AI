@@ -1,46 +1,15 @@
-from enum import Enum
-import os, copy
+"""
+File containing helper functions for searching algorithm
+"""
+
+import os
 import itertools as it
+from structure import *
 
 # Env variables
 INPUT_PATH = 'SamplePuzzle.txt'
-WIN_CONFIG = ['12345670', '13572460']
 OUTPUT_PATH = './output'
 TIMEOUT = 60
-
-# Cost of each type of move.
-class COST(Enum):
-    ZERO = 0
-    REGULAR = 1
-    WRAPPING = 2
-    DIAGONAL = 3
-
-# Possible type of move
-class move_type(Enum):
-    UP = 1
-    DOWN = 2
-    LEFT = 3
-    RIGHT = 4
-    DIAG_DOWN_RIGHT = 5
-    DIAG_DOWN_LEFT = 6
-    DIAG_UP_RIGHT = 7
-    DIAG_UP_LEFT = 8
-    WRAP_UP = 9
-    WRAP_DOWN = 10
-    WRAP_RIGHT = 11
-    WRAP_LEFT = 12
-
-class puzzle:
-    def __init__(self, content, columns, rows):
-        self.content, self.columns, self.rows = content, columns, rows
-        self.zero_idx = self.content.index('0')
-        self.last_idx = (columns * rows) - 1
-
-    # Make a move in a temp puzzle and return that puzzle
-    def move(self, to_idx):
-        temp = copy.deepcopy(self)
-        temp.content[zero_idx], temp.content[to_idx] = temp.content[to_idx], temp.content[zero_idx]
-        return temp
 
 def get_sol_file(search_type, number):
     sol = open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'solution.txt'), "w")
@@ -55,7 +24,7 @@ def get_puzzles() -> list:
     file = open(INPUT_PATH, "r")
     puzzles = []
     for line in file:
-        puzzles.append(line.rstrip('\n').replace(" ", ""))
+        puzzles.append(line.rstrip('\n'))
     return puzzles
 
 def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
@@ -74,24 +43,8 @@ def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) ->
         move_type.WRAP_LEFT: zero_idx - (columns - 1)
     }[move]
 
-class new_config:
-    def __init__(self, puzzle: puzzle, cost, predecessor: puzzle, token_to_move, gValue = 0, hValue = 0, fValue = 0):
-        self.puzzle, self.cost, self.predecessor, self.token_to_move = puzzle, cost, predecessor, token_to_move
-        self.gValue, self.hValue, self.fValue = gValue, hValue, fValue
 
-    # Calculate the heuristic h with the given function
-    def calculateH(self, funcH):
-        self.hValue = funcH(self.puzzle)
-
-    def calculateG(self, cumulative_cost):
-        gValue = self.cost + cumulative_cost
-
-    def calculateF(self):
-        self.fValue = self.gValue + self.hValue
-        return self.fValue
-
-
-def find_possible_paths(curr_puzzle: puzzle, opened= [], closed=[], cumulative_cost = None, funcH = None):
+def find_possible_paths(curr_puzzle: puzzle, opened, closed, cumulative_cost = None, funcH = None):
     # Check out all possible 1-step move from the given puzzle.
     # Return the new OPEN list based on the moves gathered.
 
@@ -128,17 +81,17 @@ def find_possible_paths(curr_puzzle: puzzle, opened= [], closed=[], cumulative_c
 
     # No duplicate paths in open list: replace existing with lowest cost path or add new path
     for path in paths:
-        open_idx = get_tuple_index(opened, path.puzzle)
+        open_idx = get_tuple_index(opened, path)
         if(open_idx and opened[open_idx].cost.value > path.cost.value):
             opened[open_idx] = path
-        elif(not open_idx):
+        elif(open_idx == None):
             opened.append(path)
 
     return opened
 
-def get_tuple_index(l, value):
-    for pos,t in enumerate(l):
-        if t.puzzle == value:
+def get_tuple_index(l, target):
+    for pos in range(len(l)):
+        if(l[pos].puzzle.is_equal(target.puzzle)):
             return pos
     return None
 
@@ -238,54 +191,54 @@ def check_corner_moves(curr_puzzle, columns, rows, zero_idx, last_idx):
     elif(zero_idx == columns - 1):
         # DIAGONAL
         temp_moving_idx = last_idx - columns + 1
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.DIAGONAL, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP LEFT
         temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP DOWN
         if(rows > 2):
             temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
-            curr_puzzle.move(temp_moving_idx)
+            newPuzzle = curr_puzzle.move(temp_moving_idx)
             paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
     # Check moves if zero_idx is on lower left corner position
     elif(zero_idx == last_idx - columns + 1):
         # DIAGONAL
         temp_moving_idx = columns - 1
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.DIAGONAL, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP RIGHT
         temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP UP
         if(rows > 2):
             temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
-            curr_puzzle.move(temp_moving_idx)
+            newPuzzle = curr_puzzle.move(temp_moving_idx)
             paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
     # Check moves if zero_idx is on lower right corner position
     elif(zero_idx == last_idx):
         # DIAGONAL
         temp_moving_idx = 0
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.DIAGONAL, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP LEFT
         temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_LEFT)
-        curr_puzzle.move(temp_moving_idx)
+        newPuzzle = curr_puzzle.move(temp_moving_idx)
         paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP UP
         if(rows > 2):
             temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_UP)
-            curr_puzzle.move(temp_moving_idx)
+            newPuzzle = curr_puzzle.move(temp_moving_idx)
             paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
     return paths
