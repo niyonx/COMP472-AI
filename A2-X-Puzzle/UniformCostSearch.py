@@ -45,7 +45,7 @@ def ucs(puzzle: str, number, invokeTimeout=True):
             return True
 
         while(opened):
-            
+
             # sort opened by lowest cost
             opened.sort(key=lambda x: x[1].value)
             puzzle, cost, predecessor, token_to_move = opened.pop(0)
