@@ -1,114 +1,111 @@
-import time
-import signal
-import helper
-from collections import defaultdict
+"""
+Uniform Cost Search (ucs).
+"""
 
-
-file = open(helper.INPUT_PATH, "r")
-puzzles = helper.get_puzzles()
-
+import time, signal, traceback
+from utils.helper import *
 
 def timeout_handler(signum, frame):
     raise Exception("timeout")
 
-
-def ucs(puzzle: str, number, invokeTimeout=True):
-    if(invokeTimeout):
+def ucs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=True):
+    if(invoke_timeout):
         signal.signal(signal.SIGALRM, timeout_handler)
-        signal.alarm(helper.TIMEOUT)
+        signal.alarm(TIMEOUT)
 
     # Create solution and search file
-    sol, search = helper.get_sol_file('_ucs_', number), helper.get_search_file('_ucs_', number)
+    sol, search = get_sol_file('_ucs_', iteration_number), get_search_file('_ucs_', iteration_number)
 
     try:
+        start_time = time.time()
+        initial_puzzle = puzzle(list(map(int, initial_puzzle.split())), columns, rows)
+        initial_config = new_config(initial_puzzle, COST.ZERO, None, 0)
 
-        startTime = time.time()
-        initial = puzzle
+        CLOSED = [initial_config]
 
-        # Each line starts with '0 0 0' because UCS does not use heuristic
-        search.write(f'0 0 0 {" ".join(initial)}\n')
+        OPEN = []
+        OPEN = find_possible_paths(initial_puzzle, OPEN, cumulative_cost=0, closed = CLOSED)
 
-        cost = 0
-        totalCost = 0
-        closed = [(initial, helper.COST.ZERO, '0', '0')]
+        # Visits the initial configuration, ucs does not use fn, gn, hn
+        search.write(f"0 0 0 {initial_config.puzzle.to_string()}\n")
 
-        opened = []
-        opened = helper.find_possible_paths(puzzle, opened)
+        while(OPEN):
+            # Sort OPEN list by lowest cost value
+            OPEN.sort(key=lambda x: x.gValue)
 
-        # Edge case: goal checking at initial position
-        if(puzzle in helper.WIN_CONFIG):
-            duration = (time.time() - startTime)
-            sol.write(f"0 0 {' '.join(initial)}\n")
-            sol.write(f"{totalCost} {duration:.1f}")
-            sol.close()
-            search.close()
-            return True
+            # Traverse the shortest path first
+            target = OPEN.pop(0)
+            CLOSED.append(target)
 
-        while(opened):
-
-            # sort opened by lowest cost
-            opened.sort(key=lambda x: x[1].value)
-            puzzle, cost, predecessor, token_to_move = opened.pop(0)
-            closed.append((puzzle, cost, predecessor, token_to_move))
-
-            # Each path visited to the search file
-            search.write(f'0 0 0 {" ".join(puzzle)}\n')
+            # Write visiting node to search file
+            search.write(f"{target.to_file()}\n")
 
             # Goal checking
-            if (puzzle in helper.WIN_CONFIG):
-                # Found the solution, stop the counter
+            if(target.puzzle.is_win()):
+                # Found the solution, stop the counter.
                 signal.alarm(0)
 
-                path = []
-                predecessor = closed[-1][2]
-                totalCost += closed[-1][1].value
-                path.append(closed.pop(-1))
+                solution_path = []
+                predecessor = target.predecessor
+                total_cost = target.cost.value
+                solution_path.append(CLOSED.pop(-1))
 
                 # Backtracking to find solution path
-                for puzzle in reversed(closed):
-                    if(puzzle[0] == predecessor):
-                        totalCost += puzzle[1].value
-                        predecessor = puzzle[2]
-                        path.append(puzzle)
+                for config in reversed(CLOSED):
+                    if(config.puzzle.is_equal(predecessor)):
+                        predecessor = config.predecessor
+                        solution_path.append(config)
 
-                duration = (time.time() - startTime)
+                total_cost = solution_path[0].gValue
 
-                for puzzle in reversed(path):
+                duration = (time.time() - start_time)
+
+                for config in reversed(solution_path):
                     sol.write(
-                        f"{puzzle[3]} {puzzle[1].value} {' '.join(puzzle[0])}\n")
+                        f"{config.to_file(write_to_solution = True)}\n"
+                    )
 
                 # Total cost and time
-                sol.write(f"{totalCost} {duration:.1f}")
+                sol.write(f"{total_cost} {duration:.1f}")
                 sol.close()
                 search.close()
 
-                return True
+                return True, total_cost, duration
 
-            opened = helper.find_possible_paths(puzzle, opened, closed)
+            OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, cumulative_cost=target.gValue)
+
+        return False, -1, -1
 
     except Exception as exc:
-
-        if (str(exc) == "timeout"):
+        if(str(exc) == "timeout"):
             sol.write('no solution')
             sol.close()
             search.close()
 
             ## Reopens search file to delete contents
-            search = helper.get_search_file('_ucs_', number)
+            search = get_search_file('_ucs_', iteration_number)
             search.write('no solution')
             search.close()
 
-            return False
-        print('Encountered oher exception (not timeout): ', exc)
+            return False, -1, -1
 
+        print('Encountered exception (not timeout): ', exc)
+        traceback.print_exc()
 
 def main():
     print("Starting...")
+
+    files = open(INPUT_PATH, "r")
+    puzzles = get_puzzles()
+
     for number, puzzle in enumerate(puzzles):
-        if (ucs(puzzle, number)):
+        found_solution, total_cost, duration = ucs(puzzle, 4, 2, number)
+        if (found_solution):
             print('Completed puzzle no.', number)
+            print('Total cost: ', total_cost)
+            print('Time: ', duration, ' milliseconds \n')
         else:
-            print('No solution for puzzle no.', number)
+            print('No solution for puzzle no.', number, '\n')
 
     print('Finished!')
 

@@ -1,21 +1,22 @@
 """
-Greedy Best First Search (gbfs).
+A* Algorithm (A*).
 """
 
 import time, signal, traceback
+from queue import PriorityQueue
 from utils.HeuristicFunc import *
 from utils.helper import *
 
 def timeout_handler(signum, frame):
     raise Exception("timeout")
 
-def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=True, funcH = None):
+def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=True, funcH = None):
     if(invoke_timeout):
         signal.signal(signal.SIGALRM, timeout_handler)
         signal.alarm(TIMEOUT)
 
     # Create solution and search file
-    sol, search = get_sol_file(f'_gbfs-{funcH.__name__}_', iteration_number), get_search_file(f'_gbfs-{funcH.__name__}_', iteration_number)
+    sol, search = get_sol_file(f'_astar-{funcH.__name__}_', iteration_number), get_search_file(f'_astar-{funcH.__name__}_', iteration_number)
 
     try:
         start_time = time.time()
@@ -29,11 +30,12 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
         # Visits the initial configuration
         initial_config.calculateH(funcH)
-        search.write(f"0 0 {initial_config.hValue} {initial_config.puzzle.to_string()}\n")
+        initial_config.calculateF()
+        search.write(f"{initial_config.fValue} {initial_config.gValue} {initial_config.hValue} {initial_config.puzzle.to_string()}\n")
 
         while(OPEN):
             # Sort OPEN list by lowest h value (heuristic value)
-            OPEN.sort(key=lambda x: x.hValue)
+            OPEN.sort(key=lambda x: x.fValue)
 
             # Traverse the shortest path first
             target = OPEN.pop(0)
@@ -41,7 +43,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
             # Write visiting node to search file
             # Only write h(n) since gbfs does not use f(n) and g(n)
-            search.write(f"{target.to_file(writeH = True)}\n")
+            search.write(f"{target.to_file(writeF = True, writeG = True, writeH = True)}\n")
 
             # Goal checking
             if(target.puzzle.is_win()):
@@ -56,9 +58,10 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
                 # Backtracking to find solution path
                 for config in reversed(CLOSED):
                     if(config.puzzle.is_equal(predecessor)):
-                        total_cost += config.cost.value
                         predecessor = config.predecessor
                         solution_path.append(config)
+
+                total_cost = solution_path[0].gValue
 
                 duration = (time.time() - start_time)
 
@@ -74,7 +77,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
                 return True, total_cost, duration
 
-            OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, funcH = funcH)
+            OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, cumulative_cost=target.gValue, funcH = funcH)
 
         return False, -1, -1
 
@@ -85,7 +88,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
             search.close()
 
             ## Reopens search file to delete contents
-            search = get_search_file(f'_gbfs-{funcH.__name__}_', iteration_number)
+            search = get_search_file(f'_astar-{funcH.__name__}_', iteration_number)
             search.write('no solution')
             search.close()
 
@@ -101,7 +104,7 @@ def main():
     puzzles = get_puzzles()
 
     for number, puzzle in enumerate(puzzles):
-        found_solution, total_cost, duration = gbfs(puzzle, 4, 2, number, funcH = h1)
+        found_solution, total_cost, duration = astar(puzzle, 4, 2, number, funcH = h1)
         if (found_solution):
             print('Completed puzzle no.', number)
             print('Total cost: ', total_cost)
