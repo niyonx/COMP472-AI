@@ -46,6 +46,7 @@ class puzzle:
     def move(self, to_idx: int):
         temp = copy.deepcopy(self)
         temp.content[self.zero_idx], temp.content[to_idx] = temp.content[to_idx], temp.content[self.zero_idx]
+        self.zero_idx = to_idx
         return temp
 
     def is_win(self):

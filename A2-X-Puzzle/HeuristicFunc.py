@@ -8,6 +8,7 @@ def funcH0(config: puzzle):
         return 0
     return 1
 
+# Counts misplaced tiles
 def funcH1(config: puzzle):
     max_count = 0
     count = 0

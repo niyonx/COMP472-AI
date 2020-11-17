@@ -44,7 +44,7 @@ def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) ->
     }[move]
 
 
-def find_possible_paths(curr_puzzle: puzzle, opened, closed, cumulative_cost = None, funcH = None):
+def find_possible_paths(curr_puzzle: puzzle, opened, closed=[], cumulative_cost = None, funcH = None):
     # Check out all possible 1-step move from the given puzzle.
     # Return the new OPEN list based on the moves gathered.
 
@@ -75,9 +75,9 @@ def find_possible_paths(curr_puzzle: puzzle, opened, closed, cumulative_cost = N
 
     # Exclude paths in closed list (if provided)
     if closed != []:
-        closed_paths = [x.puzzle for x in closed]
+        closed_paths = [x.puzzle.to_string() for x in closed]
         paths = set(paths)
-        paths = [config for config in paths if config.puzzle not in closed_paths]
+        paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
 
     # No duplicate paths in open list: replace existing with lowest cost path or add new path
     for path in paths:
@@ -98,7 +98,7 @@ def get_tuple_index(l, target):
 def check_direction_moves(curr_puzzle: puzzle, columns, rows, zero_idx, last_idx):
     paths = []
 
-     # Check move UP - regular cost
+    # Check move UP - regular cost
     temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.UP)
     if(temp_moving_idx >= 0):
         newPuzzle = curr_puzzle.move(temp_moving_idx)
@@ -131,7 +131,7 @@ def check_direction_moves(curr_puzzle: puzzle, columns, rows, zero_idx, last_idx
 def check_diag_moves(curr_puzzle, columns, rows, zero_idx, last_idx):
     paths = []
 
-     # Check move DIAG DOWN RIGHT - diagonal cost
+    # Check move DIAG DOWN RIGHT - diagonal cost
     temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.DIAG_DOWN_RIGHT)
     if(temp_moving_idx <= last_idx):
         # moving down right is illegal is on rightmost positions of the board
@@ -179,13 +179,13 @@ def check_corner_moves(curr_puzzle, columns, rows, zero_idx, last_idx):
         # WRAP RIGHT
         temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_RIGHT)
         newPuzzle = curr_puzzle.move(temp_moving_idx)
-        paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle[temp_moving_idx]))
+        paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
         # WRAP DOWN
         if(rows > 2):
             temp_moving_idx = get_moving_token(zero_idx, columns, rows, move_type.WRAP_DOWN)
             newPuzzle =curr_puzzle.move(temp_moving_idx)
-            paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle[temp_moving_idx]))
+            paths.append(new_config(newPuzzle, COST.WRAPPING, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
 
     # Check moves if zero_idx is on upper right corner position
     elif(zero_idx == columns - 1):

@@ -6,7 +6,7 @@ import time, signal, traceback
 from queue import PriorityQueue
 from helper import *
 from structure import *
-from HeuristicFunc import funcH0
+from HeuristicFunc import *
 
 def timeout_handler(signum, frame):
     raise Exception("timeout")
@@ -73,6 +73,8 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
             OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, funcH = funcH)
 
+        return False, -1, -1
+
     except Exception as exc:
         if(str(exc) == "timeout"):
             sol.write('no solution')
@@ -96,7 +98,7 @@ def main():
     puzzles = get_puzzles()
 
     for number, puzzle in enumerate(puzzles):
-        found_solution, total_cost, duration = gbfs(puzzle, 4, 2, number, funcH = funcH0)
+        found_solution, total_cost, duration = gbfs(puzzle, 4, 2, number, funcH = funcH1)
         if (found_solution):
             print('Completed puzzle no.', number)
             print('Total cost: ', total_cost)
