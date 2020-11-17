@@ -19,12 +19,17 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
     try:
         start_time = time.time()
-        curr_config = puzzle(list(map(int, initial_puzzle.split())), columns, rows)
+        initial_puzzle = puzzle(list(map(int, initial_puzzle.split())), columns, rows)
+        initial_config = new_config(initial_puzzle, COST.ZERO, None, 0)
 
-        CLOSED = [new_config(curr_config, COST.ZERO, None, 0)]
+        CLOSED = [initial_config]
 
         OPEN = []
-        OPEN = find_possible_paths(curr_config, OPEN, closed = CLOSED, funcH = funcH)
+        OPEN = find_possible_paths(initial_puzzle, OPEN, closed = CLOSED, cumulative_cost=0, funcH = funcH)
+
+        # Visits the initial configuration
+        initial_config.calculateH(funcH)
+        search.write(f"0 0 {initial_config.hValue} {initial_config.puzzle.to_string()}\n")
 
         while(OPEN):
             # Sort OPEN list by lowest h value (heuristic value)

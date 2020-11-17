@@ -59,10 +59,7 @@ class puzzle:
         return self.content == other.content
 
     def to_string(self):
-        output = ''
-        for char in self.content:
-            output += str(char) + ' '
-        return output
+        return ' '.join(map(str, self.content))
 
 class new_config:
     def __init__(self, puzzle: puzzle, cost, predecessor: puzzle, token_to_move, gValue = 0, hValue = 0, fValue = 0):
@@ -81,14 +78,10 @@ class new_config:
         return self.fValue
 
     def to_file(self, writeF = False, writeG = False, writeH =False, write_to_solution = False):
-        output = ''
         if write_to_solution:
-            output += str(self.token_to_move) + ' '
-            output += str(self.cost.value) +' '
+            return ' '.join([str(self.token_to_move), str(self.cost.value), self.puzzle.to_string()])
         else:
-            output += (str(self.fValue) + ' ') if writeF else (str(0) + ' ')
-            output += (str(self.gValue) + ' ') if writeG else (str(0) + ' ')
-            output += (str(self.hValue) + ' ') if writeH else (str(0) + ' ')
-
-        output += self.puzzle.to_string() + ' '
-        return output
+            return ' '.join([(str(self.fValue)) if writeF else (str(0)),
+                (str(self.gValue)) if writeG else (str(0)),
+                (str(self.hValue)) if writeH else (str(0)),
+                self.puzzle.to_string()])

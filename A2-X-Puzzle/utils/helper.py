@@ -12,20 +12,16 @@ OUTPUT_PATH = './output'
 TIMEOUT = 60
 
 def get_sol_file(search_type, number):
-    sol = open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'solution.txt'), "w")
-    return sol
+    return open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'solution.txt'), "w")
+
 
 def get_search_file(search_type, number):
-    search = open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'search.txt'), "w")
-    return search
+    return open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'search.txt'), "w")
 
 # Read the input file containing puzzles and process to a list of puzzles
 def get_puzzles() -> list:
     file = open(INPUT_PATH, "r")
-    puzzles = []
-    for line in file:
-        puzzles.append(line.rstrip('\n'))
-    return puzzles
+    return [line.rstrip('\n') for line in file]
 
 def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
     return {
@@ -55,36 +51,47 @@ def find_possible_paths(curr_puzzle: puzzle, opened, closed=[], cumulative_cost 
     rows = curr_puzzle.rows
 
     # DIRECTION MOVES
-    for config in check_direction_moves(curr_puzzle, columns, rows, zero_idx, last_idx): paths.append(config)
+    paths.extend([config for config in check_direction_moves(curr_puzzle, columns, rows, zero_idx, last_idx)])
 
     # DIAG MOVES
-    for config in check_diag_moves(curr_puzzle, columns, rows, zero_idx, last_idx): paths.append(config)
+    paths.extend([config for config in check_diag_moves(curr_puzzle, columns, rows, zero_idx, last_idx)])
 
     # CORNER MOVES
-    for config in check_corner_moves(curr_puzzle, columns, rows, zero_idx, last_idx): paths.append(config)
+    paths.extend([config for config in check_corner_moves(curr_puzzle, columns, rows, zero_idx, last_idx)])
 
-    # Calculate g (if presents)
-    if(cumulative_cost != None):
-        for config in paths:
-            config.calculateG(cumulative_cost)
-
-    # Calculate h (if presents)
+    # Calculate h (if present)
     if(funcH != None):
         for config in paths:
             config.calculateH(funcH)
 
-    # Exclude paths in closed list (if provided)
-    if closed != []:
-        closed_paths = [x.puzzle.to_string() for x in closed]
-        paths = set(paths)
-        paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
+    # Calculate g and f (if present)
+    if(cumulative_cost != None): # A*
+        for config in paths:
+            config.calculateG(cumulative_cost)
+            config.calculateF()
+        # Checking closed to place back in open if lower f value or ignore
+        if closed != []:
+            closed_paths = [x.puzzle.to_string() for x in closed]
+            for i, closed_path in enumerate(closed_paths):
+                for path in paths:
+                    # Remove paths in closed which now has a lower f value in open
+                    if(closed_path == path.puzzle.to_string() and closed[i].fValue > path.fValue):
+                        del closed[i]
+                        del closed_paths[i]
+            # Include paths not in closed list (if provided)
+            paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
+    else: # GBFS and UCS
+        # Include paths not in closed list (if provided)
+        if closed != []:
+            closed_paths = [x.puzzle.to_string() for x in closed]
+            paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
 
     # No duplicate paths in open list: replace existing with lowest cost path or add new path
     for path in paths:
         open_idx = get_tuple_index(opened, path)
         if(open_idx and opened[open_idx].cost.value > path.cost.value):
             opened[open_idx] = path
-        elif(open_idx == None):
+        elif(not open_idx):
             opened.append(path)
 
     return opened
@@ -93,7 +100,7 @@ def get_tuple_index(l, target):
     for pos in range(len(l)):
         if(l[pos].puzzle.is_equal(target.puzzle)):
             return pos
-    return None
+    return False
 
 def check_direction_moves(curr_puzzle: puzzle, columns, rows, zero_idx, last_idx):
     paths = []
@@ -162,10 +169,6 @@ def check_diag_moves(curr_puzzle, columns, rows, zero_idx, last_idx):
         if(zero_idx % columns != 0):
             newPuzzle = curr_puzzle.move(temp_moving_idx)
             paths.append(new_config(newPuzzle, COST.DIAGONAL, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
-
-    for config in paths:
-        if(config.puzzle.to_string() == '1 2 3 5 0 6 4 7 '):
-            print('Found')
 
     return paths
 
