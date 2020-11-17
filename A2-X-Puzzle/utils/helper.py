@@ -59,14 +59,10 @@ def find_possible_paths(curr_puzzle: puzzle, opened, closed=[], cumulative_cost 
     # CORNER MOVES
     paths.extend([config for config in check_corner_moves(curr_puzzle, columns, rows, zero_idx, last_idx)])
 
-    # Calculate h (if present)
-    if(funcH != None):
+    # Calculate g and f (if present)
+    if(cumulative_cost != None and funcH): # A*
         for config in paths:
             config.calculateH(funcH)
-
-    # Calculate g and f (if present)
-    if(cumulative_cost != None): # A*
-        for config in paths:
             config.calculateG(cumulative_cost)
             config.calculateF()
         # Checking closed to place back in open if lower f value or ignore
@@ -80,7 +76,16 @@ def find_possible_paths(curr_puzzle: puzzle, opened, closed=[], cumulative_cost 
                         del closed_paths[i]
             # Include paths not in closed list (if provided)
             paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
-    else: # GBFS and UCS
+    elif (funcH): # GBFS
+        for config in paths:
+            config.calculateH(funcH)
+        # Include paths not in closed list (if provided)
+        if closed != []:
+            closed_paths = [x.puzzle.to_string() for x in closed]
+            paths = [config for config in paths if config.puzzle.to_string() not in closed_paths]
+    elif(cumulative_cost != None):
+        for config in paths:
+            config.calculateG(cumulative_cost)
         # Include paths not in closed list (if provided)
         if closed != []:
             closed_paths = [x.puzzle.to_string() for x in closed]

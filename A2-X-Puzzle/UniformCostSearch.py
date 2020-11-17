@@ -24,14 +24,14 @@ def ucs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tru
         CLOSED = [initial_config]
 
         OPEN = []
-        OPEN = find_possible_paths(initial_puzzle, OPEN, closed = CLOSED)
+        OPEN = find_possible_paths(initial_puzzle, OPEN, cumulative_cost=0, closed = CLOSED)
 
         # Visits the initial configuration, ucs does not use fn, gn, hn
         search.write(f"0 0 0 {initial_config.puzzle.to_string()}\n")
 
         while(OPEN):
             # Sort OPEN list by lowest cost value
-            OPEN.sort(key=lambda x: x.cost.value)
+            OPEN.sort(key=lambda x: x.gValue)
 
             # Traverse the shortest path first
             target = OPEN.pop(0)
@@ -53,9 +53,10 @@ def ucs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tru
                 # Backtracking to find solution path
                 for config in reversed(CLOSED):
                     if(config.puzzle.is_equal(predecessor)):
-                        total_cost += config.cost.value
                         predecessor = config.predecessor
                         solution_path.append(config)
+
+                total_cost = solution_path[0].gValue
 
                 duration = (time.time() - start_time)
 
@@ -71,7 +72,7 @@ def ucs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tru
 
                 return True, total_cost, duration
 
-            OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED)
+            OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, cumulative_cost=target.gValue)
 
         return False, -1, -1
 

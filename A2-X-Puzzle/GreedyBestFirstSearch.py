@@ -15,7 +15,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
         signal.alarm(TIMEOUT)
 
     # Create solution and search file
-    sol, search = get_sol_file('_gbfs_', iteration_number), get_search_file('_gbfs_', iteration_number)
+    sol, search = get_sol_file(f'_gbfs-{funcH.__name__}_', iteration_number), get_search_file(f'_gbfs-{funcH.__name__}_', iteration_number)
 
     try:
         start_time = time.time()
@@ -85,7 +85,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
             search.close()
 
             ## Reopens search file to delete contents
-            search = get_search_file('_gbfs_', iteration_number)
+            search = get_search_file(f'_gbfs-{funcH.__name__}_', iteration_number)
             search.write('no solution')
             search.close()
 
@@ -101,7 +101,7 @@ def main():
     puzzles = get_puzzles()
 
     for number, puzzle in enumerate(puzzles):
-        found_solution, total_cost, duration = gbfs(puzzle, 4, 2, number, funcH = funcH1)
+        found_solution, total_cost, duration = gbfs(puzzle, 4, 2, number, funcH = h1)
         if (found_solution):
             print('Completed puzzle no.', number)
             print('Total cost: ', total_cost)

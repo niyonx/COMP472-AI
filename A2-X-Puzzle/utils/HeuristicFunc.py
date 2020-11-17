@@ -3,13 +3,13 @@ from utils.structure import *
 """
 A naive heuristic h0 (not optimal)
 """
-def funcH0(config: puzzle):
+def h0(config: puzzle):
     if(config.content[config.last_idx] == 0):
         return 0
     return 1
 
 # Counts misplaced tiles
-def funcH1(config: puzzle):
+def h1(config: puzzle):
     max_count = 0
     count = 0
     for win in WIN_CONFIG:

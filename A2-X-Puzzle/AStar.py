@@ -16,7 +16,7 @@ def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=T
         signal.alarm(TIMEOUT)
 
     # Create solution and search file
-    sol, search = get_sol_file('_astar_', iteration_number), get_search_file('_astar_', iteration_number)
+    sol, search = get_sol_file(f'_astar-{funcH.__name__}_', iteration_number), get_search_file(f'_astar-{funcH.__name__}_', iteration_number)
 
     try:
         start_time = time.time()
@@ -58,9 +58,10 @@ def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=T
                 # Backtracking to find solution path
                 for config in reversed(CLOSED):
                     if(config.puzzle.is_equal(predecessor)):
-                        total_cost += config.cost.value
                         predecessor = config.predecessor
                         solution_path.append(config)
+
+                total_cost = solution_path[0].gValue
 
                 duration = (time.time() - start_time)
 
@@ -87,7 +88,7 @@ def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=T
             search.close()
 
             ## Reopens search file to delete contents
-            search = get_search_file('_astar_', iteration_number)
+            search = get_search_file(f'_astar-{funcH.__name__}_', iteration_number)
             search.write('no solution')
             search.close()
 
@@ -103,7 +104,7 @@ def main():
     puzzles = get_puzzles()
 
     for number, puzzle in enumerate(puzzles):
-        found_solution, total_cost, duration = astar(puzzle, 4, 2, number, funcH = funcH1)
+        found_solution, total_cost, duration = astar(puzzle, 4, 2, number, funcH = h1)
         if (found_solution):
             print('Completed puzzle no.', number)
             print('Total cost: ', total_cost)
