@@ -1,4 +1,4 @@
-from structure import *
+from utils.structure import *
 
 """
 A naive heuristic h0 (not optimal)

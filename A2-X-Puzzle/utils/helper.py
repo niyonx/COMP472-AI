@@ -4,7 +4,7 @@ File containing helper functions for searching algorithm
 
 import os
 import itertools as it
-from structure import *
+from utils.structure import *
 
 # Env variables
 INPUT_PATH = 'SamplePuzzle.txt'
@@ -162,6 +162,10 @@ def check_diag_moves(curr_puzzle, columns, rows, zero_idx, last_idx):
         if(zero_idx % columns != 0):
             newPuzzle = curr_puzzle.move(temp_moving_idx)
             paths.append(new_config(newPuzzle, COST.DIAGONAL, curr_puzzle, curr_puzzle.content[temp_moving_idx]))
+
+    for config in paths:
+        if(config.puzzle.to_string() == '1 2 3 5 0 6 4 7 '):
+            print('Found')
 
     return paths
 

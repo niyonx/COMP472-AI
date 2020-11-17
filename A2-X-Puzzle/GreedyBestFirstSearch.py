@@ -3,10 +3,8 @@ Greedy Best First Search (gbfs).
 """
 
 import time, signal, traceback
-from queue import PriorityQueue
-from helper import *
-from structure import *
-from HeuristicFunc import *
+from utils.HeuristicFunc import *
+from utils.helper import *
 
 def timeout_handler(signum, frame):
     raise Exception("timeout")
@@ -61,7 +59,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
                 for config in reversed(solution_path):
                     sol.write(
-                        f"{config.token_to_move} {config.cost.value} {config.to_file()}\n"
+                        f"{config.to_file(write_to_solution = True)}\n"
                     )
 
                 # Total cost and time

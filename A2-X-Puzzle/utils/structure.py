@@ -46,7 +46,7 @@ class puzzle:
     def move(self, to_idx: int):
         temp = copy.deepcopy(self)
         temp.content[self.zero_idx], temp.content[to_idx] = temp.content[to_idx], temp.content[self.zero_idx]
-        self.zero_idx = to_idx
+        temp.zero_idx = to_idx
         return temp
 
     def is_win(self):
@@ -80,10 +80,15 @@ class new_config:
         self.fValue = self.gValue + self.hValue
         return self.fValue
 
-    def to_file(self, writeF = False, writeG = False, writeH =False):
+    def to_file(self, writeF = False, writeG = False, writeH =False, write_to_solution = False):
         output = ''
-        output += (str(self.fValue) + ' ') if writeF else (str(0) + ' ')
-        output += (str(self.gValue) + ' ') if writeG else (str(0) + ' ')
-        output += (str(self.hValue) + ' ') if writeH else (str(0) + ' ')
+        if write_to_solution:
+            output += str(self.token_to_move) + ' '
+            output += str(self.cost.value) +' '
+        else:
+            output += (str(self.fValue) + ' ') if writeF else (str(0) + ' ')
+            output += (str(self.gValue) + ' ') if writeG else (str(0) + ' ')
+            output += (str(self.hValue) + ' ') if writeH else (str(0) + ' ')
+
         output += self.puzzle.to_string() + ' '
         return output
