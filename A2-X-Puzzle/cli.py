@@ -9,7 +9,7 @@ import UniformCostSearch
 
 @click.group()
 def main():
-   pass
+    pass
 
 @main.command()
 @click.option('--path', prompt='Path to output folder', default='./output', help='The path to output folder, default to ./output ')
@@ -21,7 +21,7 @@ def clean(path):
 
 @main.command()
 @click.option('--algo', prompt='Run algorithm ',
-              help='Type of algorithm to run.(ucs, gbfs, astar)')
+            help='Type of algorithm to run.(ucs, gbfs, astar)')
 @click.option('--h', prompt='Type of heuristic function (will be ignored if it is ucs)', default=0, help='Type of heuristic function (h0, h1, h2). If the choosen algorithm is UCS, ignore this.')
 @click.option('--path', default='', help='The path to the input puzzles. SamplePuzzle.txt by default')
 def run(algo, h, path):
