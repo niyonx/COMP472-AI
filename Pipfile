@@ -15,6 +15,7 @@ notebook = "*"
 pandas = "*"
 autopep8 = "*"
 matplotlib = "*"
+click = "*"
 
 [requires]
 python_version = "3.8"

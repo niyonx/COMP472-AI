@@ -97,14 +97,23 @@ def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=T
         print('Encountered exception (not timeout): ', exc)
         traceback.print_exc()
 
-def main():
+def run(puzzle_input = '', heuristicFunc = 0):
     print("Starting...")
 
-    files = open(INPUT_PATH, "r")
-    puzzles = get_puzzles()
+    if(puzzle_input == ''):
+        puzzle_input = INPUT_PATH
+
+    files = open(puzzle_input, "r")
+    puzzles = get_puzzles(puzzle_input)
+
+    funcH = h0
+    if(heuristicFunc == 1):
+        funcH = h1
+    if(heuristicFunc == 2):
+        funcH = h2
 
     for number, puzzle in enumerate(puzzles):
-        found_solution, total_cost, duration = astar(puzzle, 4, 2, number, funcH = h1)
+        found_solution, total_cost, duration = astar(puzzle, 4, 2, number, funcH = funcH)
         if (found_solution):
             print('Completed puzzle no.', number)
             print('Total cost: ', total_cost)
@@ -113,7 +122,3 @@ def main():
             print('No solution for puzzle no.', number, '\n')
 
     print('Finished!')
-
-
-if __name__ == "__main__":
-    main()

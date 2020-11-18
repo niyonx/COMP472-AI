@@ -92,11 +92,14 @@ def ucs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tru
         print('Encountered exception (not timeout): ', exc)
         traceback.print_exc()
 
-def main():
+def run(puzzle_input = ''):
     print("Starting...")
 
-    files = open(INPUT_PATH, "r")
-    puzzles = get_puzzles()
+    if(puzzle_input == ''):
+        puzzle_input = INPUT_PATH
+
+    files = open(puzzle_input, "r")
+    puzzles = get_puzzles(puzzle_input)
 
     for number, puzzle in enumerate(puzzles):
         found_solution, total_cost, duration = ucs(puzzle, 4, 2, number)
@@ -106,9 +109,4 @@ def main():
             print('Time: ', duration, ' milliseconds \n')
         else:
             print('No solution for puzzle no.', number, '\n')
-
     print('Finished!')
-
-
-if __name__ == "__main__":
-    main()
