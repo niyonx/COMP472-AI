@@ -19,8 +19,8 @@ def get_search_file(search_type, number):
     return open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'search.txt'), "w")
 
 # Read the input file containing puzzles and process to a list of puzzles
-def get_puzzles() -> list:
-    file = open(INPUT_PATH, "r")
+def get_puzzles(path) -> list:
+    file = open(path, "r")
     return [line.rstrip('\n') for line in file]
 
 def get_moving_token(zero_idx: int, columns: int, rows: int, move: move_type) -> int:
