@@ -80,7 +80,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
 
             OPEN = find_possible_paths(target.puzzle, OPEN, CLOSED, funcH = funcH)
 
-        return False, -1, -1, 0, search_length
+        return False, 0, 60, 0, search_length
 
     except Exception as exc:
         if(str(exc) == "timeout"):
@@ -93,7 +93,7 @@ def gbfs(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=Tr
             search.write('no solution')
             search.close()
 
-            return False, -1, -1, 0, search_length
+            return False, 0, 60, 0, search_length
 
         print('Encountered exception (not timeout): ', exc)
         traceback.print_exc()
@@ -142,12 +142,12 @@ def run(puzzle_input = '', heuristicFunc = 0):
 
     print('Summary')
     print(f'\tSolution path total length: {sol_length}')
-    print(f'\tSolution path average length: {(sol_length/ no_puzzles):.2f}')
+    print(f'\tSolution path average length: {(sol_length/ (no_puzzles-no_sol)):.2f}')
     print(f'\tSearch path total length: {search_length}')
     print(f'\tSearch path average length: {(search_length/ no_puzzles):.2f}')
     print(f'\tTotal no of no solution: {no_sol}')
     print(f'\tAverage no of no solution: {(no_sol/ no_puzzles):.2f}')
     print(f'\tTotal cost: {cost}')
-    print(f'\tAverage cost: {(cost/ no_puzzles):.2f}')
+    print(f'\tAverage cost: {(cost/ (no_puzzles-no_sol)):.2f}')
     print(f'\tTotal execution time: {time}')
     print(f'\tAverage execution time: {(time/no_puzzles):.2f}')
