@@ -104,11 +104,7 @@ def run(puzzle_input = '', heuristicFunc = 0):
     if(puzzle_input == ''):
         puzzle_input = INPUT_PATH
 
-    funcH = h0
-    if(heuristicFunc == 1):
-        funcH = h1
-    if(heuristicFunc == 2):
-        funcH = h2
+    funcH = get_funcH(heuristicFunc)
 
     files = open(puzzle_input, "r")
     puzzles = get_puzzles(puzzle_input)
@@ -140,14 +136,4 @@ def run(puzzle_input = '', heuristicFunc = 0):
 
     print('Finished!')
 
-    print('Summary')
-    print(f'\tSolution path total length: {sol_length}')
-    print(f'\tSolution path average length: {(sol_length/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tSearch path total length: {search_length}')
-    print(f'\tSearch path average length: {(search_length/ no_puzzles):.2f}')
-    print(f'\tTotal no of no solution: {no_sol}')
-    print(f'\tAverage no of no solution: {(no_sol/ no_puzzles):.2f}')
-    print(f'\tTotal cost: {cost}')
-    print(f'\tAverage cost: {(cost/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tTotal execution time: {time}')
-    print(f'\tAverage execution time: {(time/no_puzzles):.2f}')
+    print_analysis(sol_length, no_puzzles, search_length, no_sol, cost, time)

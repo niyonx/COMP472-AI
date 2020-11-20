@@ -124,22 +124,12 @@ def run(puzzle_input = ''):
         else:
             no_sol += 1
             print('No solution for puzzle no.', number, '\n')
-        
+
         sol_length += total_sol_length
         search_length += total_search_length
         cost += total_cost
         time += duration
-        
+
     print('Finished!')
 
-    print('Summary')
-    print(f'\tSolution path total length: {sol_length}')
-    print(f'\tSolution path average length: {(sol_length/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tSearch path total length: {search_length}')
-    print(f'\tSearch path average length: {(search_length/ no_puzzles):.2f}')
-    print(f'\tTotal no of no solution: {no_sol}')
-    print(f'\tAverage no of no solution: {(no_sol/ no_puzzles):.2f}')
-    print(f'\tTotal cost: {cost}')
-    print(f'\tAverage cost: {(cost/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tTotal execution time: {time}')
-    print(f'\tAverage execution time: {(time/no_puzzles):.2f}')
+    print_analysis(sol_length, no_puzzles, search_length, no_sol, cost, time)
