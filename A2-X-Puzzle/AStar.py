@@ -4,7 +4,6 @@ A* Algorithm (A*).
 
 import time, signal, traceback
 from queue import PriorityQueue
-from utils.HeuristicFunc import *
 from utils.helper import *
 
 def timeout_handler(signum, frame):
@@ -72,7 +71,7 @@ def astar(initial_puzzle: str, columns, rows, iteration_number, invoke_timeout=T
                     sol.write(
                         f"{config.to_file(write_to_solution = True)}\n"
                     )
-                    sol_length += 1 
+                    sol_length += 1
 
                 # Total cost and time
                 sol.write(f"{total_cost} {duration:.1f}")
@@ -110,11 +109,7 @@ def run(puzzle_input = '', heuristicFunc = 0):
     files = open(puzzle_input, "r")
     puzzles = get_puzzles(puzzle_input)
 
-    funcH = h0
-    if(heuristicFunc == 1):
-        funcH = h1
-    if(heuristicFunc == 2):
-        funcH = h2
+    funcH = get_funcH(heuristicFunc)
 
     # Analysis
     sol_length = 0
@@ -135,7 +130,7 @@ def run(puzzle_input = '', heuristicFunc = 0):
         else:
             no_sol += 1
             print('No solution for puzzle no.', number, '\n')
-        
+
         sol_length += total_sol_length
         search_length += total_search_length
         cost += total_cost
@@ -143,14 +138,5 @@ def run(puzzle_input = '', heuristicFunc = 0):
 
     print('Finished!\n')
 
-    print('Summary')
-    print(f'\tSolution path total length: {sol_length}')
-    print(f'\tSolution path average length: {(sol_length/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tSearch path total length: {search_length}')
-    print(f'\tSearch path average length: {(search_length/ no_puzzles):.2f}')
-    print(f'\tTotal no of no solution: {no_sol}')
-    print(f'\tAverage no of no solution: {(no_sol/ no_puzzles):.2f}')
-    print(f'\tTotal cost: {cost}')
-    print(f'\tAverage cost: {(cost/ (no_puzzles-no_sol)):.2f}')
-    print(f'\tTotal execution time: {time}')
-    print(f'\tAverage execution time: {(time/no_puzzles):.2f}')
+    print_analysis(sol_length, no_puzzles, search_length, no_sol, cost, time)
+

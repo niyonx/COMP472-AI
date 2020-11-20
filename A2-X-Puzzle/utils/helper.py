@@ -5,6 +5,7 @@ File containing helper functions for searching algorithm
 import os
 import itertools as it
 from utils.structure import *
+from utils.HeuristicFunc import *
 
 # Env variables
 INPUT_PATH = 'SamplePuzzle.txt'
@@ -17,6 +18,28 @@ def get_sol_file(search_type, number):
 
 def get_search_file(search_type, number):
     return open(os.path.join(OUTPUT_PATH, str(number) + search_type + 'search.txt'), "w")
+
+def print_analysis(sol_length, no_puzzles, search_length, no_sol, cost, time):
+    print('Summary')
+    print(f'\tSolution path total length: {sol_length}')
+    if(no_puzzles - no_sol != 0):
+        print(f'\tSolution path average length: {(sol_length/ (no_puzzles-no_sol)):.2f}')
+    print(f'\tSearch path total length: {search_length}')
+    print(f'\tSearch path average length: {(search_length/ no_puzzles):.2f}')
+    print(f'\tTotal no of no solution: {no_sol}')
+    print(f'\tAverage no of no solution: {(no_sol/ no_puzzles):.2f}')
+    print(f'\tTotal cost: {cost}')
+    if(no_puzzles - no_sol != 0):
+        print(f'\tAverage cost: {(cost/ (no_puzzles-no_sol)):.2f}')
+    print(f'\tTotal execution time: {time}')
+    print(f'\tAverage execution time: {(time/no_puzzles):.2f}')
+
+def get_funcH(number):
+    if(number == 0):
+        return h0
+    if(number == 1):
+        return h1
+    return h2
 
 # Read the input file containing puzzles and process to a list of puzzles
 def get_puzzles(path) -> list:
