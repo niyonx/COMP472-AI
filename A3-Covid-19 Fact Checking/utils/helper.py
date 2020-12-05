@@ -12,4 +12,4 @@ def get_vocabulary(data, filtered=False):
         min_df = 2
     vect = CountVectorizer(min_df=min_df, lowercase=True)
     vocab = vect.fit_transform(data["text"])
-    return vocab, len(vect.vocabulary_)
+    return vocab, len(vect.vocabulary_), vect

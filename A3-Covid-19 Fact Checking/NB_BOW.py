@@ -9,8 +9,9 @@ class MultinomialNB(object):
         self.filtered = filtered
 
     def fit(self, X, y):
+        
         # Get Vocabulary
-        X, train_vocab_length = get_vocabulary(X, self.filtered)
+        X, train_vocab_length, training_vocab = get_vocabulary(X, self.filtered)
 
         # Calculate probability of each class
         self.prior = {}
@@ -49,11 +50,14 @@ class MultinomialNB(object):
         # Convert to dictionary for greater speed
         self.Pr_dict = Pr.to_dict()
 
+        self.training_vocab = training_vocab
+
         return self
 
     def predict(self, X):
-        # Get new Vocabulary
-        X, _ = get_vocabulary(X)
+
+        # Get new document term matrix from previously learned vocabulary in training
+        X = self.training_vocab.transform(X["text"])
 
         docIdx, wordIdx = X.nonzero()
         count = X.data
