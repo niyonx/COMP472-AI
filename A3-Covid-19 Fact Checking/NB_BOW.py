@@ -1,107 +1,156 @@
-from utils.helper import get_vocabulary
 import pandas as pd
 import numpy as np
+import math
+from collections import Counter
+import re
+import string
 
 
 class MultinomialNB(object):
-    def __init__(self, alpha=0.01, filtered=False):
+    filter_pattern = re.compile(r'[\W_]+')
+
+    def __init__(self, alpha, filtered, lookup_table={}):
         self.alpha = alpha
         self.filtered = filtered
 
-    def fit(self, X, y):
-        # Get Vocabulary
-        X, train_vocab_length = get_vocabulary(X, self.filtered)
+    def fit(self, train_data, X, Y):
+        """
+        Fit the model based on train_data
+        X: tweet text
+        Y: label of tweet (1 or 0)
+        """
+        self.set_prior(Y)
 
-        # Calculate probability of each class
-        self.prior = {}
-        total = y.value_counts().sum()
+        # Split the data to 2 categories
+        yes_tweet = train_data[train_data['q1_label'] == 1]
+        no_tweet = train_data[train_data['q1_label'] == 0]
 
-        for i, cat in enumerate(y.value_counts(sort=False)):
-            self.prior[i] = cat / total
+        # Extract the vocabulary from data
+        yes_vocab, yes_num_of_words = self.get_vocabulary(yes_tweet)
+        no_vocab, no_num_of_words = self.get_vocabulary(no_tweet)
 
-        # Create word probability table
-        docIdx, wordIdx = X.nonzero()
-        count = X.data
-        classIdx = []
-        for idx in docIdx:
-            classIdx.append(y[idx])
+        # Create a full vocab from the dataset
+        full_vocab = self.create_full_vocab(yes_vocab, no_vocab)
+        size_of_vocab = len(full_vocab)
 
-        df = pd.DataFrame()
-        df["docIdx"] = np.array(docIdx)
-        df["wordIdx"] = np.array(wordIdx)
-        df["count"] = np.array(count)
-        df["classIdx"] = np.array(classIdx)
+        # Fill up each vocab with missing words from the full_vocab
+        yes_vocab = self.fill_vocab(yes_vocab, full_vocab)
+        no_vocab = self.fill_vocab(no_vocab, full_vocab)
 
-        # Calculate probability of each word based on class
-        pb_ij = df.groupby(['classIdx', 'wordIdx'])
-        pb_j = df.groupby(['classIdx'])
-        Pr = (pb_ij['count'].sum() + self.alpha) / (pb_j['count'].sum() +
-                                                    train_vocab_length)
-
-        # Unstack series
-        Pr = Pr.unstack()
-
-        # Replace NaN or columns with 0 as word count with alpha / (count + |V| +1)
-        for c in range(0, 1):
-            Pr.loc[c, :] = Pr.loc[c, :].fillna(
-                self.alpha / (pb_j['count'].sum()[c] + train_vocab_length + 1))
-
-        # Convert to dictionary for greater speed
-        self.Pr_dict = Pr.to_dict()
-
+        # Create 2 lookup table for the 2 classes
+        self.yes_lookup = self.generate_lookup_table(
+            yes_vocab, yes_num_of_words, size_of_vocab)
+        self.no_lookup = self.generate_lookup_table(
+            no_vocab, no_num_of_words, size_of_vocab)
         return self
 
-    def predict(self, X):
-        # Get new Vocabulary
-        X, _ = get_vocabulary(X)
+    def fill_vocab(self, vocab, full_vocab):
+        """
+        Fill the current vocab with words from the full_vocab
+        ie: "covid" doesn't exist in yes_vocab but existed in full_vocab
+        => create an entry in yes_vocab with "covid": 0
+        return: the updated vocab
+        """
+        for word in full_vocab:
+            if word not in vocab:
+                vocab[word] = 0
 
-        docIdx, wordIdx = X.nonzero()
-        count = X.data
+        return vocab
 
-        df = pd.DataFrame()
-        df["docIdx"] = np.array(docIdx)
-        df["wordIdx"] = np.array(wordIdx)
-        df["count"] = np.array(count)
+    def create_full_vocab(self, yes_vocab, no_vocab):
+        """
+        Create a Set of vocab from both yes and no vocab (no duplicates)
+        return: the set of vocab
+        """
+        vocab = set(yes_vocab.keys())
+        vocab.update(set(no_vocab.keys()))
+        return vocab
 
-        # Using dictionaries for greater speed
-        df_dict = df.to_dict()
-        new_dict = {}
-        prediction = []
+    def generate_lookup_table(self, vocab, number_of_word, size_of_vocab):
+        """
+        Generate a lookup table for the given vocabulary
+        return: a dictionary of type ("word": probability), ie: ("covid": 0.34)
+        """
+        for word, frequency in vocab.items():
+            # probability = (frequency + alpha) / (total-number-of-words-in-class + alpha * size of vocab)
+            vocab[word] = (frequency + self.alpha) / \
+                (number_of_word + self.alpha * size_of_vocab)
+        return vocab
 
-        # new_dict = {docIdx : {wordIdx: count},....}
-        for idx in range(len(df_dict['docIdx'])):
-            docIdx = df_dict['docIdx'][idx]
-            wordIdx = df_dict['wordIdx'][idx]
-            count = df_dict['count'][idx]
-            try:
-                new_dict[docIdx][wordIdx] = count
-            except:
-                new_dict[df_dict['docIdx'][idx]] = {}
-                new_dict[docIdx][wordIdx] = count
+    def get_vocabulary(self, data):
+        """
+        Get the vocabulary given the data
+        return: 
+            + a dictionary in format ("word": frequency), ie: ("covid": 30)
+            + length: total number of words extracted from the data (duplication counted)
+        """
+        min_frequency = 1
+        if(self.filtered):
+            min_frequency = 2
+        vocab = []
+        length = 0
+        for index, row in data.iterrows():
+            sentence_vocab, sentence_word_length = self.get_words_from_sentence(
+                row['text'], ' ')
+            vocab += sentence_vocab
+            length += sentence_word_length
 
-        # Calculating the scores for each doc
-        for docIdx in range(0, len(new_dict)):
-            score_dict = {}
-            # Creating a probability row for each class
-            for classIdx in range(0, 2):
-                score_dict[classIdx] = 1
-                # For each word:
-                for wordIdx in new_dict[docIdx]:
-                    # Check for frequency smoothing
-                    # log(1+f)*log(Pr(i|j))
-                    try:
-                        probability = self.Pr_dict[wordIdx][classIdx]
-                        power = np.log10(1 + new_dict[docIdx][wordIdx])
-                        score_dict[classIdx] += power * np.log10(probability)
-                    except:
-                        # Missing V = 0
-                        score_dict[classIdx] += 0
+        # Counter transforms the list to a non-duplicate dict with the frequency is the value https://pymotw.com/2/collections/counter.html
+        vocab = Counter(vocab)
+        for word in list(vocab):
+            if vocab[word] < min_frequency:
+                length -= vocab[word]
+                vocab.pop(word)
 
-                # Multiply final with prior
-                score_dict[classIdx] += np.log10(self.prior[classIdx])
+        return dict(vocab), length
 
-            # Get class with max probabilty for the given docIdx
-            max_score = max(score_dict, key=score_dict.get)
-            prediction.append(max_score)
+    def get_words_from_sentence(self, line, separator):
+        # split words from a sentence with the given separator (default is " ")
+        words = []
+        length = 0
+        for each_word in line.split(separator):
+            # Make word lowercase then filter out hashtags and special characters
+            word = self.filter_pattern.sub('', each_word.lower())
+            if (word != ''):
+                words.append(word)
+                length += 1
+        return words, length
 
-        return prediction
+    def set_prior(self, Y):
+        """
+        Calculate the prior probability: P('yes') and P('no')
+        """
+        self.prior = dict()
+        self.prior['p_yes'] = Y.value_counts()[1] / len(Y)
+        self.prior['p_no'] = Y.value_counts()[0] / len(Y)
+
+    def predict_line(self, line_text):
+        # Give prediction from a line of text
+        score_yes = self.calculate_score(line_text, 'yes')
+        score_no = self.calculate_score(line_text, 'no')
+        max_score = score_yes if score_yes > score_no else score_no
+        prediction = 1 if score_yes > score_no else 0
+        return (prediction, max_score)
+
+    def predict(self, data):
+        # Give preidction from a list of text, output is a list of predictions
+        result = []
+        for row in data:
+            prediction, score = self.predict_line(row)
+            result.append(prediction)
+        return result
+
+    def calculate_score(self, line_text, category):
+        """
+        Calculate the probability of a line text for the given category
+        ie: calculate_score(line_text, "yes") -> score(yes) for the text
+        """
+        lookup_table = self.yes_lookup if category == 'yes' else self.no_lookup
+        p_prior = self.prior['p_' + category]
+        score = math.log10(p_prior)
+        words, _ = self.get_words_from_sentence(line_text, ' ')
+        # For each word, check the lookup table of that category to get the P(word | category)
+        for word in words:
+            if word in lookup_table:
+                score += math.log10(lookup_table[word])
+        return score
