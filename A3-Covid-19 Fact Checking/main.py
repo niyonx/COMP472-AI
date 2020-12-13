@@ -43,8 +43,8 @@ def test_model(model, test_data_path, output_dir, output_file_name, eval_file_na
             num_of_correct += 1
 
         # Write result to file
-        content = """{}  {}  {:.4}  {}  {}\n""".format(
-            row['tweet_id'], line_prediction, str(max_score), target, outcome)
+        content = """{}  {}  {:.2E}  {}  {}\n""".format(
+            row['tweet_id'], line_prediction, max_score, target, outcome)
 
         output_file.write(content)
 
@@ -84,10 +84,10 @@ def evaluate(y_true, y_pred, eval_file_path, num_of_correct):
     f1_no = 2 * (prec_no * rec_no) / (prec_no + rec_no)
 
     eval_file = open(eval_file_path, "w")
-    eval_file.write("{:.4}\n".format(acc))
-    eval_file.write("{:.4}  {:.4}\n".format(prec_yes, prec_no))
-    eval_file.write("{:.4}  {:.4}\n".format(rec_yes, rec_no))
-    eval_file.write("{:.4}  {:.4}\n".format(f1_yes, f1_no))
+    eval_file.write("{:.4f}\n".format(acc))
+    eval_file.write("{:.4f}  {:.4f}\n".format(prec_yes, prec_no))
+    eval_file.write("{:.4f}  {:.4f}\n".format(rec_yes, rec_no))
+    eval_file.write("{:.4f}  {:.4f}\n".format(f1_yes, f1_no))
     eval_file.close()
     print('Eval file produced: ', eval_file_path)
 
